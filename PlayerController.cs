@@ -1,78 +1,138 @@
 using UnityEngine;
+
 public class PlayerController : MonoBehaviour
 {
-    // Variável visível no Inspector para Designers testarem
-    public float velocidadeDoJogador = 6.0f;
-    public float velocidadeDeRotacao = 150.0f;
-    // Variáveis privadas de controle interno
-    private float inputHorizontal;
-    private float inputVertical;
+    
+    public float velocidade = 5f;
+    public float velocidadeRotacao = 150f;
+    public float distanciaDash = 4f;
 
-    private Vector3 posJogador = Vector3.zero;
+    private Vector3 posJogador = new Vector3(0f, 0f, 0f);
     private Vector3 posInimigo = new Vector3(5f, 0f, 0f);
+
+    
+    private bool podeSeMover = true;
+    private float multiplicadorTempo = 1f;
+    private float tempoSobrevivido = 0f;
+
+    
+    private float velocidadePatrulha = 3f;
 
     void Start()
     {
-        Debug.Log("Sistema de Input acoplado ao Eco.");
+        Debug.Log("Sistema iniciado");
 
-        //1.Teletransporte Ecológico
+        //1. Teletransporte
         transform.position = new Vector3(0f, 5f, 0f);
 
-        //2. Crescimento da Árvore (Escala)
+        //2. Escala
         transform.localScale = new Vector3(2f, 2f, 2f);
 
-        //3. Atalhos de Direção
+        //3. Atalho Vector3.up
         transform.position += Vector3.up * 3f;
 
-        //5. Distância entre Objetos
+        //5. Distância
         float distancia = Vector3.Distance(posJogador, posInimigo);
-        Debug.Log("Distância entre Jogador e Inimigo: " + distancia);
-
+        Debug.Log("Distância: " + distancia);
     }
 
     void Update()
     {
-        // 1. Ler inputs de forma imediata (Raw)
-        inputHorizontal = Input.GetAxisRaw("Horizontal");
-        inputVertical = Input.GetAxisRaw("Vertical");
-        // 2. Construir vetor de direção
-        Vector3 direcaoDoMovimento = new Vector3(inputHorizontal, 0, 0);
-        // 3. Mover independente da taxa de frames
-        transform.Translate(direcaoDoMovimento * velocidadeDoJogador * Time.deltaTime, Space.World);
+        
 
-        Vector3 direcaoDaRotacao = new Vector3(0, 0, inputVertical);
-        transform.Rotate(new Vector3(inputVertical, inputHorizontal, 0) * velocidadeDeRotacao * Time.deltaTime);
+        float horizontalRaw = Input.GetAxisRaw("Horizontal");
 
-        //4. Botão de Pânico (Reset de Posição)
-        if (Input.GetKeyDown(KeyCode.R)){
-            transform.position = Vector3.zero;
+        if (horizontalRaw > 0)
+            Debug.Log("Direita");
+        else if (horizontalRaw < 0)
+            Debug.Log("Esquerda");
+        else
+            Debug.Log("Parado");
 
-        //6. Detector de Direção Bruta (Eixo X)
+        float verticalSuave = Input.GetAxis("Vertical");
+        Debug.Log("Vertical suave: " + verticalSuave);
 
-            float horizontal = Input.GetAxisRaw("Horizontal");
+        
+        //9. FREIO
+        
 
-            if (horizontal > 0){
-                Debug.Log("Movendo para a Direita");
-            } else if (horizontal < 0){
-                Debug.Log("Movendo para a Esquerda");
-            } else {
-                Debug.Log("Parado");
-            }
-
-         //7.Eixo Vertical Suave    
-
-            float vertical = Input.GetAxis("Vertical");
-
-          
-
-
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            podeSeMover = false;
+            Debug.Log("Movimentação travada");
         }
 
+        
 
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
 
+        Vector3 direcao = new Vector3(horizontal, vertical, 0f).normalized;
 
+        if (podeSeMover)
+        {
+            //12. SHIFT (SLOW MOTION)
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                multiplicadorTempo = 0.5f;
+            else
+                multiplicadorTempo = 1f;
+
+            transform.Translate(direcao * velocidade * multiplicadorTempo * Time.deltaTime);
+        }
+
+        
+        //8. PULO
+       
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            transform.Translate(Vector3.up);
+        }
+
+        
+        //13. DASH
+        
+
+        if (Input.GetKeyDown(KeyCode.Z) || Input.GetMouseButtonDown(0))
+        {
+            if (direcao == Vector3.zero)
+                direcao = Vector3.right;
+
+            transform.Translate(direcao * distanciaDash);
+        }
+
+        
+        //4. RESET
+        
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            transform.position = Vector3.zero;
+        }
+
+        
+        //10. ERRO INTENCIONAL
+        
+
+        transform.Translate(Vector3.right);
+        Debug.Log("Movimento MUITO rápido (sem deltaTime)");
+
+        
+        //14. CRONÔMETRO
+        
+
+        tempoSobrevivido += Time.deltaTime;
+        Debug.Log("Tempo: " + tempoSobrevivido.ToString("F2"));
+
+        
+        //15. PATRULHA
+        
+
+        transform.Translate(Vector3.right * velocidadePatrulha * Time.deltaTime);
+
+        if (transform.position.x > 5f || transform.position.x < -5f)
+        {
+            velocidadePatrulha *= -1f;
+        }
     }
 }
-
-
-
